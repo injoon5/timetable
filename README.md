@@ -1,6 +1,5 @@
 ## todo
- - [ ] get data from api
- - [ ] show event data
- - [ ] make timetable customizable
+ - [X] get data from api
+ - [X] make timetable customizable
  - [ ] full stack app
  - [ ] $$$
