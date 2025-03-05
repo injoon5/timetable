@@ -6,6 +6,7 @@ import { Label } from "./ui/label"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { useState, useEffect } from "react"
+import { cn } from "@/lib/utils"
 
 interface ClassConfig {
   school: string
@@ -44,7 +45,19 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="dark:bg-neutral-900 dark:border-neutral-800" onKeyDown={handleKeyDown}>
+      <DialogContent 
+        className={cn(
+          "dark:bg-neutral-900 dark:border-neutral-800",
+          "w-[90%] max-w-lg p-6",
+          "rounded-lg",
+          "data-[state=open]:animate-in data-[state=closed]:animate-out",
+          "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
+          "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
+          "data-[state=open]:slide-in-from-left-1/2 data-[state=closed]:slide-out-to-left-1/2",
+          "data-[state=open]:slide-in-from-top-[48%] data-[state=closed]:slide-out-to-top-[48%]"
+        )}
+        onKeyDown={handleKeyDown}
+      >
         <DialogHeader>
           <DialogTitle className="dark:text-neutral-100">설정</DialogTitle>
           <DialogDescription className="dark:text-neutral-400">
@@ -60,17 +73,11 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
               onChange={(e) => setTempConfig({ ...tempConfig, school: e.target.value })}
               className="dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 dark:placeholder-neutral-400"
               placeholder="학교 이름을 입력하세요"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.stopPropagation() // Prevent double handling
-                  handleSave()
-                }
-              }}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="relative">
               <Label className="dark:text-neutral-200">학년</Label>
               <Select
                 value={tempConfig.grade}
@@ -79,7 +86,11 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
                 <SelectTrigger className="dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100">
                   <SelectValue placeholder="학년 선택" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-neutral-800 dark:border-neutral-700">
+                <SelectContent 
+                  className="dark:bg-neutral-800 dark:border-neutral-700 max-h-[200px]"
+                  position="popper"
+                  sideOffset={4}
+                >
                   {[1, 2, 3].map((grade) => (
                     <SelectItem 
                       key={grade} 
@@ -93,7 +104,7 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
               </Select>
             </div>
             
-            <div>
+            <div className="relative">
               <Label className="dark:text-neutral-200">반</Label>
               <Select
                 value={tempConfig.class}
@@ -102,7 +113,11 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
                 <SelectTrigger className="dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100">
                   <SelectValue placeholder="반 선택" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-neutral-800 dark:border-neutral-700">
+                <SelectContent 
+                  className="dark:bg-neutral-800 dark:border-neutral-700 max-h-[200px]"
+                  position="popper"
+                  sideOffset={4}
+                >
                   {Array.from({length: 15}, (_, i) => i + 1).map((classNum) => (
                     <SelectItem 
                       key={classNum} 
@@ -140,7 +155,7 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
             </Select>
           </div>
           
-          <Button onClick={handleSave}>
+          <Button onClick={handleSave} className="w-full sm:w-auto">
             저장
           </Button>
         </div>
