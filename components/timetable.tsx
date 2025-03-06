@@ -383,7 +383,7 @@ export default function Timetable() {
         <div className="flex justify-between items-center mb-4">
           {timetableData?.update_date && !error && (
             <p className="ml-1 text-sm text-neutral-500 dark:text-neutral-400">
-              업데이트: {timetableData.update_date}
+              업데이트: {timetableData.update_date.slice(1, -1)}
             </p>
           )}
         </div>

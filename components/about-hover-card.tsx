@@ -1,15 +1,26 @@
 "use client"
 
+import { useState } from "react"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card"
 import { Info } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
 export function AboutHoverCard() {
+  const [isOpen, setIsOpen] = useState(false)
+
   return (
-    <HoverCard openDelay={100} closeDelay={200}>
+    <HoverCard 
+      openDelay={100} 
+      closeDelay={200}
+      open={isOpen}
+      onOpenChange={setIsOpen}
+    >
       <HoverCardTrigger asChild>
-        <button className="p-2 rounded-full border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+        <button 
+          className="p-2 rounded-full border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+          onClick={() => setIsOpen(!isOpen)}
+        >
           <Info className="w-5 h-5" />
         </button>
       </HoverCardTrigger>
