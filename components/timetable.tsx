@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Clock, Settings, ChevronLeft, ChevronRight } from "lucide-react"
+import { Clock, Settings, ChevronLeft, ChevronRight, Calendar, Utensils } from "lucide-react"
 import { TeacherInfoPopup } from "./teacher-info-popup"
 import { getCookie, setCookie } from 'cookies-next'
 import { ConfigDialog } from "./config-dialog"
@@ -11,7 +11,7 @@ import { Button } from "./ui/button"
 import { cn } from "@/lib/utils"
 import config from '@/config.json'
 import { useTimetableStore } from "@/store/timetable"
-
+import Link from "next/link"
 // Constants
 const DAYS = ["월", "화", "수", "목", "금"]
 const API_URL = config.isDev ? config.development.apiUrl : config.production.apiUrl
@@ -330,12 +330,6 @@ export default function Timetable() {
           )}
         </div>
         <div className="flex justify-center gap-2">
-          <button
-            onClick={() => setShowConfig(true)}
-            className="p-2 rounded-full border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
           <AboutHoverCard />
         </div>
       </div>

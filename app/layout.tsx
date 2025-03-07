@@ -1,10 +1,13 @@
 import type { Metadata } from 'next'
-import { Analytics } from "@vercel/analytics/react"
+import { Inter } from 'next/font/google'
 import './globals.css'
+import { Nav } from '@/components/nav'
+
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: '중학교 시간표',
-  description: '중학교 시간표 확인',
+  title: '시간표',
+  description: '학교 시간표를 확인하세요',
   generator: 'Next.js',
   openGraph: {
     type: "website",
@@ -22,10 +25,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="ko">
+      <body className={inter.className}>
+        <Nav />
         {children}
-        <Analytics />
       </body>
     </html>
   )
