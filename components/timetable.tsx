@@ -73,7 +73,6 @@ export default function Timetable() {
     isNextWeek, 
     isWeekChangeLoading,
     changeWeek,
-    teacherInfo,
     showConfig,
     setShowConfig,
     classConfig,
@@ -83,7 +82,8 @@ export default function Timetable() {
     initializeStore,
     setTempConfig,
     saveConfig,
-    saveTeacherInfo
+    saveTeacherInfo,
+    getTeacherInfo
   } = useTimetableStore()
 
   // Single effect for initial setup
@@ -143,7 +143,7 @@ export default function Timetable() {
   }
 
   const renderSubjectCell = (subject: string, index: number, periodIdx: number) => {
-    const info = teacherInfo[`${classConfig?.schoolCode}-${classConfig?.grade}-${classConfig?.class}`]?.[subject]
+    const info = getTeacherInfo(subject)
     const isEmpty = subject === ""
     const periodData = timetableData?.timetable[index]?.[periodIdx]
     const isReplaced = periodData?.replaced
@@ -174,12 +174,11 @@ export default function Timetable() {
           </span>
     
           {isReplaced && originalSubject && (
-          <span className="text-xs text-red-500 dark:text-red-400 -mt-1 line-clamp-1">
+            <span className="text-xs text-red-500 dark:text-red-400 -mt-1 line-clamp-1">
               ({originalSubject} 대체)
             </span>
           )}
 
-    
           {info && (
             <span className="text-xs xs:text-sm sm:text-base text-neutral-600 dark:text-neutral-400 font-medium print:text-base print:mt-0 line-clamp-1">
               {info}

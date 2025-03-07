@@ -16,13 +16,13 @@ const DEFAULT_CONFIG: ClassConfig = {
 interface TimetableState {
   // Persistent state
   classConfig: ClassConfig
-  teacherInfo: Record<string, Record<string, string>>
+  teacherInfo: Record<string, Record<string, string>> // User overrides only
   
   // Temporary state (not persisted)
   tempConfig: ClassConfig | null
   timetableData: TimetableData | null
   isLoading: boolean
-  isWeekChangeLoading: boolean  // New state for week change loading
+  isWeekChangeLoading: boolean
   error: string | null
   isNextWeek: boolean
   showConfig: boolean
@@ -32,10 +32,11 @@ interface TimetableState {
   setTempConfig: (config: ClassConfig) => void
   resetTempConfig: () => void
   setShowConfig: (show: boolean) => void
-  changeWeek: (isNext: boolean) => Promise<void>  // Updated week change action
+  changeWeek: (isNext: boolean) => Promise<void>
   saveConfig: () => Promise<boolean>
   saveTeacherInfo: (subject: string, info: string) => void
   fetchTimetable: (config?: ClassConfig) => Promise<void>
+  getTeacherInfo: (subject: string) => string | undefined
 }
 
 interface ClassConfig {
@@ -51,7 +52,7 @@ interface TimetableData {
   timetable: Array<Array<{
     period: number
     subject: string
-    teacher: string
+    teacher: string  // This is the default teacher info from API
     replaced: boolean
     original: {
       period: number
@@ -65,7 +66,7 @@ interface TimetableData {
 export const useTimetableStore = create<TimetableState>()((set, get) => ({
   // Initialize with default values
   classConfig: DEFAULT_CONFIG,
-  teacherInfo: {},
+  teacherInfo: {}, // Only store user overrides
   tempConfig: null,
   timetableData: null,
   isLoading: true,
@@ -79,7 +80,7 @@ export const useTimetableStore = create<TimetableState>()((set, get) => ({
     const savedConfig = getCookie('classConfig')
     const config = savedConfig ? JSON.parse(savedConfig as string) : DEFAULT_CONFIG
     
-    // Load saved teacher info
+    // Load saved teacher info overrides
     const savedTeacherInfo = getCookie('teacherInfo')
     const teacherInfo = savedTeacherInfo ? JSON.parse(savedTeacherInfo as string) : {}
 
@@ -199,19 +200,50 @@ export const useTimetableStore = create<TimetableState>()((set, get) => ({
   },
 
   saveTeacherInfo: (subject: string, info: string) => {
-    const { classConfig, teacherInfo } = get()
+    const { classConfig, teacherInfo, timetableData } = get()
     const configKey = `${classConfig.schoolCode}-${classConfig.grade}-${classConfig.class}`
     
-    const newInfo = {
-      ...teacherInfo,
-      [configKey]: {
-        ...(teacherInfo[configKey] || {}),
-        [subject]: info
+    // Find the default teacher info from the API data
+    const defaultInfo = timetableData?.timetable.flat().find(cell => cell?.subject === subject)?.teacher
+
+    // Only save if it's different from the API default
+    if (info !== defaultInfo) {
+      const newInfo = {
+        ...teacherInfo,
+        [configKey]: {
+          ...(teacherInfo[configKey] || {}),
+          [subject]: info
+        }
+      }
+      set({ teacherInfo: newInfo })
+      setCookie('teacherInfo', JSON.stringify(newInfo))
+    } else {
+      // If it matches the API default, remove any override
+      const newInfo = { ...teacherInfo }
+      if (newInfo[configKey]?.[subject]) {
+        delete newInfo[configKey][subject]
+        if (Object.keys(newInfo[configKey]).length === 0) {
+          delete newInfo[configKey]
+        }
+        set({ teacherInfo: newInfo })
+        setCookie('teacherInfo', JSON.stringify(newInfo))
       }
     }
+  },
 
-    set({ teacherInfo: newInfo })
-    setCookie('teacherInfo', JSON.stringify(newInfo))
+  getTeacherInfo: (subject: string) => {
+    const { classConfig, teacherInfo, timetableData } = get()
+    const configKey = `${classConfig.schoolCode}-${classConfig.grade}-${classConfig.class}`
+    
+    // First check for user override
+    const override = teacherInfo[configKey]?.[subject]
+    if (override !== undefined) {
+      return override
+    }
+    
+    // If no override, return the API default
+    const defaultInfo = timetableData?.timetable.flat().find(cell => cell?.subject === subject)?.teacher
+    return defaultInfo || undefined
   },
 
   fetchTimetable: async (config?: ClassConfig) => {
