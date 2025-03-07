@@ -3,7 +3,7 @@
 import * as React from "react"
 import { type DialogProps } from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"
-import { Search } from "lucide-react"
+import { Search, ChevronDown, ChevronUp } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
@@ -16,6 +16,7 @@ const Command = React.forwardRef<
     ref={ref}
     className={cn(
       "flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground",
+      "max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-400 dark:scrollbar-thumb-neutral-600",
       className
     )}
     {...props}
@@ -80,19 +81,106 @@ const CommandEmpty = React.forwardRef<
 
 CommandEmpty.displayName = CommandPrimitive.Empty.displayName
 
-const CommandGroup = React.forwardRef<
-  React.ElementRef<typeof CommandPrimitive.Group>,
-  React.ComponentPropsWithoutRef<typeof CommandPrimitive.Group>
+const CommandScrollUpButton = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <CommandPrimitive.Group
+  <div
     ref={ref}
     className={cn(
-      "overflow-hidden p-1 text-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground",
+      "flex cursor-default items-center justify-center py-1",
       className
     )}
     {...props}
-  />
+  >
+    <ChevronUp className="h-4 w-4" />
+  </div>
 ))
+CommandScrollUpButton.displayName = "CommandScrollUpButton"
+
+const CommandScrollDownButton = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "flex cursor-default items-center justify-center py-1",
+      className
+    )}
+    {...props}
+  >
+    <ChevronDown className="h-4 w-4" />
+  </div>
+))
+CommandScrollDownButton.displayName = "CommandScrollDownButton"
+
+const CommandGroup = React.forwardRef<
+  React.ElementRef<typeof CommandPrimitive.Group>,
+  React.ComponentPropsWithoutRef<typeof CommandPrimitive.Group>
+>(({ className, ...props }, ref) => {
+  const [showUpButton, setShowUpButton] = React.useState(false)
+  const [showDownButton, setShowDownButton] = React.useState(false)
+  const groupRef = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    const group = groupRef.current
+    if (!group) return
+
+    const updateScroll = () => {
+      if (!group) return
+      setShowUpButton(group.scrollTop > 0)
+      setShowDownButton(
+        group.scrollTop < group.scrollHeight - group.clientHeight
+      )
+    }
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      group.scrollBy({ top: e.deltaY })
+      updateScroll()
+    }
+
+    updateScroll()
+    group.addEventListener("wheel", handleWheel)
+    group.addEventListener("scroll", updateScroll)
+    window.addEventListener("resize", updateScroll)
+
+    return () => {
+      group.removeEventListener("wheel", handleWheel)
+      group.removeEventListener("scroll", updateScroll)
+      window.removeEventListener("resize", updateScroll)
+    }
+  }, [])
+
+  return (
+    <div className="relative">
+      {showUpButton && <CommandScrollUpButton 
+        onClick={() => {
+          groupRef.current?.scrollBy(0, -50)
+        }}
+      />}
+      <div
+        ref={groupRef}
+        className="max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-400 dark:scrollbar-thumb-neutral-600"
+      >
+        <CommandPrimitive.Group
+          ref={ref}
+          className={cn(
+            "overflow-hidden p-1 text-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground",
+            className
+          )}
+          {...props}
+        />
+      </div>
+      {showDownButton && <CommandScrollDownButton 
+        onClick={() => {
+          groupRef.current?.scrollBy(0, 50)
+        }}
+      />}
+    </div>
+  )
+})
 
 CommandGroup.displayName = CommandPrimitive.Group.displayName
 
@@ -150,4 +238,6 @@ export {
   CommandItem,
   CommandShortcut,
   CommandSeparator,
+  CommandScrollUpButton,
+  CommandScrollDownButton,
 }

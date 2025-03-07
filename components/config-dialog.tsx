@@ -5,11 +5,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Label } from "./ui/label"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
+import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "./ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
+import debounce from 'lodash/debounce'
+
+interface School {
+  SCHUL_NM: string
+  ATPT_OFCDC_SC_NM: string
+  SCHUL_KND_SC_NM: string
+  SD_SCHUL_CODE: string
+}
 
 interface ClassConfig {
   school: string
+  schoolCode: string
   grade: string
   class: string
   lunchAfter: number
@@ -23,28 +35,155 @@ interface ConfigDialogProps {
   onSave: (config: ClassConfig) => void
 }
 
+const API_URL = "https://school-api.ij5.dev"
+
 export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, onSave }: ConfigDialogProps) {
   const [tempConfig, setTempConfig] = useState(classConfig)
+  const [schools, setSchools] = useState<School[]>([])
+  const [openCombobox, setOpenCombobox] = useState(false)
+  const [searchValue, setSearchValue] = useState("")
+  const [availableClasses, setAvailableClasses] = useState<string[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [isSearching, setIsSearching] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
+  // Add debug logs to track state changes
+  useEffect(() => {
+    console.log('Schools updated:', schools)
+    console.log('Open combobox:', openCombobox)
+    console.log('Search value:', searchValue)
+  }, [schools, openCombobox, searchValue])
+
+  // Reset form when dialog opens
   useEffect(() => {
     if (open) {
       setTempConfig(classConfig)
+      setSearchValue(classConfig.school) // Set initial search value to current school
+      setError(null)
+      if (classConfig.school) {
+        searchSchools(classConfig.school) // Search for current school when dialog opens
+      } else {
+        setSchools([])
+      }
     }
   }, [open, classConfig])
 
-  const handleSave = () => {
-    onSave(tempConfig)
+  // Update classes when school and grade change
+  useEffect(() => {
+    if (tempConfig.schoolCode && tempConfig.grade) {
+      fetchClasses(tempConfig.schoolCode, tempConfig.grade)
+    }
+  }, [tempConfig.schoolCode, tempConfig.grade])
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      if (isSearching || !tempConfig.schoolCode) {  // Add check for valid school selection
+        setTempConfig(prev => ({
+          ...prev,
+          school: '',
+          schoolCode: '',
+          grade: '',
+          class: ''
+        }))
+        setSearchValue('')
+      }
+      setIsSearching(false)
+    }
+    onOpenChange(open)
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSave()
+  const handleSearchValueChange = (value: string) => {
+    console.log('Search value changing to:', value)
+    setSearchValue(value)
+    setIsSearching(true)
+    setOpenCombobox(true)
+    
+    if (value.length < 2) {  // Clear results immediately if input is too short
+      setSchools([])
+      setError(null)
+      return
+    }
+    
+    searchSchools(value)
+  }
+
+  const handleSchoolSelect = (schoolName: string) => {
+    const school = schools.find(s => s.SCHUL_NM === schoolName)
+    if (!school) return
+
+    setTempConfig(prev => ({
+      ...prev,
+      school: schoolName,
+      schoolCode: school.SD_SCHUL_CODE,
+      grade: '',
+      class: ''
+    }))
+    setOpenCombobox(true)
+    setSearchValue(schoolName)
+    setIsSearching(false)
+  }
+
+  const getAvailableGrades = (schoolName: string) => {
+    const school = schools.find(s => s.SCHUL_NM === schoolName)
+    return school?.SCHUL_NM.endsWith('초등학교') ? 
+      Array.from({length: 6}, (_, i) => (i + 1).toString()) :
+      ['1', '2', '3']
+  }
+
+  // Fetch available classes when school and grade are selected
+  const fetchClasses = async (schoolCode: string, grade: string) => {
+    try {
+      setError(null)
+      const response = await fetch(`${API_URL}/classes?grade=${grade}&schoolcode=${schoolCode}`)
+      if (!response.ok) throw new Error('반 정보를 불러오지 못했습니다')
+      const data = await response.json()
+      setAvailableClasses(Array.isArray(data) ? data : [])
+      if (Array.isArray(data) && data.length === 0) {
+        setError('해당 학년의 반 정보가 없습니다')
+      }
+    } catch (error) {
+      console.error('Error fetching classes:', error)
+      setAvailableClasses([])
+      setError(error instanceof Error ? error.message : '반 정보를 불러오는 중 오류가 발생했습니다')
     }
   }
 
+  // Update the searchSchools function
+  const searchSchools = useMemo(() =>
+    debounce(async (query: string) => {
+      console.log('Searching schools for:', query)
+      if (query.length < 2) {
+        setSchools([])
+        setError(null)
+        setIsSearching(false)
+        return
+      }
+      
+      setIsLoading(true) // Start loading
+      try {
+        setError(null)
+        const response = await fetch(`${API_URL}/school?schoolname=${encodeURIComponent(query)}`)
+        if (!response.ok) throw new Error('학교 정보를 불러오지 못했습니다')
+        const data = await response.json()
+        setSchools(Array.isArray(data) ? data : [])
+        if (Array.isArray(data) && data.length === 0) {
+          setError('검색 결과가 없습니다')
+        }
+      } catch (error) {
+        console.error('Error fetching schools:', error)
+        setSchools([])
+        setError(error instanceof Error ? error.message : '학교 정보를 불러오는 중 오류가 발생했습니다')
+      } finally {
+        setIsLoading(false) // End loading
+        setOpenCombobox(true)
+        setIsSearching(false)
+      }
+    }, 500),
+    []
+  )
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent 
         className={cn(
           "dark:bg-neutral-900 dark:border-neutral-800",
@@ -56,7 +195,6 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
           "data-[state=open]:slide-in-from-left-1/2 data-[state=closed]:slide-out-to-left-1/2",
           "data-[state=open]:slide-in-from-top-[48%] data-[state=closed]:slide-out-to-top-[48%]"
         )}
-        onKeyDown={handleKeyDown}
       >
         <DialogHeader>
           <DialogTitle className="dark:text-neutral-100">설정</DialogTitle>
@@ -66,35 +204,110 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
-          <div>
+          <div className="flex flex-col gap-2">
             <Label className="dark:text-neutral-200">학교</Label>
-            <Input
-              value={tempConfig.school}
-              onChange={(e) => setTempConfig({ ...tempConfig, school: e.target.value })}
-              className="dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 dark:placeholder-neutral-400"
-              placeholder="학교 이름을 입력하세요"
-            />
+            <Popover 
+              open={openCombobox} 
+              onOpenChange={(open) => {
+                console.log('Popover open changing to:', open)
+                setOpenCombobox(open)
+              }}
+            >
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={openCombobox}
+                  className="justify-between w-full dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100"
+                  onClick={() => {
+                    console.log('Trigger clicked, current open state:', openCombobox)
+                    setOpenCombobox(true)
+                  }}
+                >
+                  {searchValue || "학교 검색..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent 
+                className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-neutral-800 dark:border-neutral-700"
+                align="start"
+              >
+                <Command className="dark:bg-neutral-800">
+                  <CommandInput 
+                    placeholder="학교 이름 검색..." 
+                    value={searchValue}
+                    onValueChange={handleSearchValueChange}
+                    className="dark:bg-neutral-800 dark:text-neutral-100"
+                  />
+                  <div className=" overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-400 dark:scrollbar-thumb-neutral-600">
+                    {error ? (
+                      <div className="py-6 text-center text-sm text-neutral-500 dark:text-neutral-400">
+                        {error}
+                      </div>
+                    ) : searchValue.length <= 1 ? (
+                      <CommandEmpty className="py-6 text-center text-sm dark:text-neutral-400">
+                        학교 이름을 입력하세요
+                      </CommandEmpty>
+                    ) : isLoading ? (
+                      <div className="py-6 text-center text-sm dark:text-neutral-400">
+                        검색중...
+                      </div>
+                    ) : schools.length === 0 ? (
+                      <div className="py-6 text-center text-sm dark:text-neutral-400">
+                        검색 결과가 없습니다
+                      </div>
+                    ) : (
+                      <CommandGroup className="dark:bg-neutral-800" key={searchValue}>
+                        {schools.map((school) => {
+                          console.log('School:', school)
+                          return (
+                            <CommandItem
+                              key={`${school.SCHUL_NM}-${school.SD_SCHUL_CODE}`}
+                              onSelect={() => handleSchoolSelect(school.SCHUL_NM)}
+                              className="dark:text-neutral-100 dark:hover:bg-neutral-700 cursor-pointer"
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  tempConfig.school === school.SCHUL_NM ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {school.SCHUL_NM}
+                              <span className="ml-2 text-sm text-neutral-500 dark:text-neutral-400">
+                                ({school.ATPT_OFCDC_SC_NM})
+                              </span>
+                            </CommandItem>
+                          )
+                        })}
+                      </CommandGroup>
+                    )}
+                  </div>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            {error && (
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                {error}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="relative">
+            <div>
               <Label className="dark:text-neutral-200">학년</Label>
               <Select
+                disabled={!tempConfig.school || isSearching}
                 value={tempConfig.grade}
-                onValueChange={(value) => setTempConfig({ ...tempConfig, grade: value })}
+                onValueChange={(value) => setTempConfig({ ...tempConfig, grade: value, class: '' })}
               >
                 <SelectTrigger className="dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100">
                   <SelectValue placeholder="학년 선택" />
                 </SelectTrigger>
-                <SelectContent 
-                  className="dark:bg-neutral-800 dark:border-neutral-700 max-h-[200px]"
-                  position="popper"
-                  sideOffset={4}
-                >
-                  {[1, 2, 3].map((grade) => (
+                <SelectContent className="dark:bg-neutral-800 dark:border-neutral-700">
+                  {tempConfig.school && getAvailableGrades(tempConfig.school).map((grade) => (
                     <SelectItem 
                       key={grade} 
-                      value={grade.toString()}
+                      value={grade}
                       className="dark:text-neutral-100 dark:focus:bg-neutral-700"
                     >
                       {grade}학년
@@ -103,25 +316,22 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
                 </SelectContent>
               </Select>
             </div>
-            
-            <div className="relative">
+
+            <div>
               <Label className="dark:text-neutral-200">반</Label>
               <Select
+                disabled={!tempConfig.school || !tempConfig.grade || isSearching}
                 value={tempConfig.class}
                 onValueChange={(value) => setTempConfig({ ...tempConfig, class: value })}
               >
                 <SelectTrigger className="dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100">
                   <SelectValue placeholder="반 선택" />
                 </SelectTrigger>
-                <SelectContent 
-                  className="dark:bg-neutral-800 dark:border-neutral-700 max-h-[200px]"
-                  position="popper"
-                  sideOffset={4}
-                >
-                  {Array.from({length: 15}, (_, i) => i + 1).map((classNum) => (
+                <SelectContent className="dark:bg-neutral-800 dark:border-neutral-700">
+                  {availableClasses.map((classNum) => (
                     <SelectItem 
                       key={classNum} 
-                      value={classNum.toString()}
+                      value={classNum}
                       className="dark:text-neutral-100 dark:focus:bg-neutral-700"
                     >
                       {classNum}반
@@ -135,6 +345,7 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
           <div>
             <Label className="dark:text-neutral-200">점심시간</Label>
             <Select
+              disabled={!tempConfig.school || !tempConfig.grade || !tempConfig.class || isSearching}
               value={tempConfig.lunchAfter.toString()}
               onValueChange={(value) => setTempConfig({ ...tempConfig, lunchAfter: parseInt(value) })}
             >
@@ -155,7 +366,11 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
             </Select>
           </div>
           
-          <Button onClick={handleSave} className="w-full sm:w-auto">
+          <Button 
+            onClick={() => onSave(tempConfig)}
+            disabled={!tempConfig.school || !tempConfig.grade || !tempConfig.class || isSearching}
+            className="w-full sm:w-auto"
+          >
             저장
           </Button>
         </div>

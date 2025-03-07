@@ -1,19 +1,19 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Clock, Settings, Info, ChevronLeft, ChevronRight } from "lucide-react"
+import { Clock, Settings, ChevronLeft, ChevronRight } from "lucide-react"
 import { TeacherInfoPopup } from "./teacher-info-popup"
-import { HelpCircle } from "lucide-react"
 import { getCookie, setCookie } from 'cookies-next'
 import { ConfigDialog } from "./config-dialog"
 import { AboutHoverCard } from "./about-hover-card"
 import { Skeleton } from "./ui/skeleton"
 import { Button } from "./ui/button"
-import { CalendarDays, CalendarRange } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // Constants
 const DAYS = ["월", "화", "수", "목", "금"]
+const API_URL = "https://school-api.ij5.dev"
+// const API_URL = "http://localhost:8000"
 
 const COLORS = [
   'bg-red-100 hover:bg-red-200 dark:bg-red-900/50 dark:hover:bg-red-900/70',
@@ -22,6 +22,8 @@ const COLORS = [
   'bg-green-100 hover:bg-green-200 dark:bg-green-900/50 dark:hover:bg-green-900/70',
   'bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/50 dark:hover:bg-blue-900/70'
 ]
+
+const DEFAULT_SCHOOL_CODE = "7081492"
 
 function getSubjectColor(subject: string) {
   // Generate a consistent index based on the subject name
@@ -34,16 +36,9 @@ function getSubjectColor(subject: string) {
   return COLORS[colorIndex];
 }
 
-const DAY_SCHEDULES = [
-  { day: "월", subjects: ["한문", "체육", "과2", "역사", "국어", "수학", ""] },
-  { day: "화", subjects: ["영어", "음악", "중국어", "창체", "수학", "사회", "과1"] },
-  { day: "수", subjects: ["수학", "영어", "스포츠", "사회", "미술", "미술", "국어"] },
-  { day: "목", subjects: ["체육", "독서", "중국어", "영어", "역사", "과1", ""] },
-  { day: "금", subjects: ["과2", "음악", "영어", "체육", "수학", "국어", ""] }
-]
-
 interface ClassConfig {
   school: string
+  schoolCode: string
   grade: string
   class: string
   lunchAfter: number
@@ -73,12 +68,12 @@ export default function Timetable() {
   const [error, setError] = useState<string | null>(null)
   const [timetableData, setTimetableData] = useState<TimetableData | null>(null)
   const [isNextWeek, setIsNextWeek] = useState(false)
-  const [errorTimeout, setErrorTimeout] = useState<NodeJS.Timeout | null>(null)
 
   // Single effect for initial setup
   useEffect(() => {
     const defaultConfig = {
       school: "목운중학교",
+      schoolCode: DEFAULT_SCHOOL_CODE,
       grade: "3",
       class: "4",
       lunchAfter: 4
@@ -121,7 +116,7 @@ export default function Timetable() {
     }
   }, [isNextWeek])
 
-  // Simplified fetchTimetable
+  // Update fetchTimetable to use API_URL
   const fetchTimetable = async (config: ClassConfig) => {
     setIsLoading(true)
     setError(null)
@@ -131,10 +126,10 @@ export default function Timetable() {
         grade: config.grade,
         classno: config.class,
         week: isNextWeek ? "1" : "0", 
-        schoolname: config.school
+        schoolcode: config.schoolCode
       })
       
-      const response = await fetch(`https://school-api.ij5.dev/timetable?${params}`)
+      const response = await fetch(`${API_URL}/timetable?${params}`)
       if (!response.ok) {
         throw new Error(`Error: ${response.status}`)
       }
@@ -169,7 +164,7 @@ export default function Timetable() {
   }
 
   const saveTeacherInfo = (subject: string, info: string) => {
-    const configKey = `${classConfig?.school}-${classConfig?.grade}-${classConfig?.class}`
+    const configKey = `${classConfig?.schoolCode}-${classConfig?.grade}-${classConfig?.class}`
     const newInfo = {
       ...teacherInfo,
       [configKey]: {
@@ -182,7 +177,7 @@ export default function Timetable() {
   }
 
   const generatePeriods = () => {
-    if (!timetableData) return []
+    if (!timetableData?.day_time?.length || !timetableData?.timetable?.length) return []
     
     // First, create all regular periods
     const periods = timetableData.day_time.map((timeStr, idx) => {
@@ -207,13 +202,15 @@ export default function Timetable() {
     }
 
     // Insert lunch after the specified period
-    periods.splice(classConfig?.lunchAfter, 0, lunchPeriod)
+    if (typeof classConfig?.lunchAfter === 'number') {
+      periods.splice(classConfig.lunchAfter, 0, lunchPeriod)
+    }
 
     return periods
   }
 
   const renderSubjectCell = (subject: string, index: number, periodIdx: number) => {
-    const info = teacherInfo[`${classConfig?.school}-${classConfig?.grade}-${classConfig?.class}`]?.[subject]
+    const info = teacherInfo[`${classConfig?.schoolCode}-${classConfig?.grade}-${classConfig?.class}`]?.[subject]
     const isEmpty = subject === ""
     const periodData = timetableData?.timetable[index]?.[periodIdx]
     const isReplaced = periodData?.replaced
