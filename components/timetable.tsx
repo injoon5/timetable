@@ -9,11 +9,18 @@ import { AboutHoverCard } from "./about-hover-card"
 import { Skeleton } from "./ui/skeleton"
 import { Button } from "./ui/button"
 import { cn } from "@/lib/utils"
+import config from '@/config.json'
 
 // Constants
 const DAYS = ["월", "화", "수", "목", "금"]
-const API_URL = "https://school-api.ij5.dev"
-// const API_URL = "http://localhost:8000"
+const API_URL = config.isDev ? config.development.apiUrl : config.production.apiUrl
+const DEBUG = config.isDev ? config.development.debug : config.production.debug
+
+const log = (...args: any[]) => {
+  if (DEBUG) {
+    console.log(...args)
+  }
+}
 
 const COLORS = [
   'bg-red-100 hover:bg-red-200 dark:bg-red-900/50 dark:hover:bg-red-900/70',
@@ -93,7 +100,7 @@ export default function Timetable() {
       try {
         setTeacherInfo(JSON.parse(storedInfo as string))
       } catch (e) {
-        console.error('Error parsing teacher info:', e)
+        log('Error parsing teacher info:', e)
       }
     }
 
@@ -116,7 +123,7 @@ export default function Timetable() {
     }
   }, [isNextWeek])
 
-  // Update fetchTimetable to use API_URL
+  // Update fetchTimetable to use API_URL and logging
   const fetchTimetable = async (config: ClassConfig) => {
     setIsLoading(true)
     setError(null)
@@ -129,12 +136,14 @@ export default function Timetable() {
         schoolcode: config.schoolCode
       })
       
+      log('Fetching timetable with params:', Object.fromEntries(params))
       const response = await fetch(`${API_URL}/timetable?${params}`)
       if (!response.ok) {
         throw new Error(`Error: ${response.status}`)
       }
       
       const data = await response.json()
+      log('Timetable data received:', data)
       setTimetableData(data)
       
       // Only save to cookies on success
@@ -142,7 +151,7 @@ export default function Timetable() {
     } catch (err) {
       // On error, revert the config
       setClassConfig(classConfig)
-      console.error('Fetch error:', err)
+      log('Fetch error:', err)
       setError(
         err instanceof Error 
           ? `시간표를 불러오는 중 오류가 발생했습니다: ${err.message}` 
@@ -153,8 +162,9 @@ export default function Timetable() {
     }
   }
 
-  // Simplify handleConfigSave
+  // Simplify handleConfigSave with logging
   const handleConfigSave = (newConfig: ClassConfig) => {
+    log('Saving new config:', newConfig)
     // Update state immediately for UI
     setClassConfig(newConfig)
     setShowConfig(false)
@@ -172,6 +182,7 @@ export default function Timetable() {
         [subject]: info
       }
     }
+    log('Saving teacher info:', { subject, info, configKey })
     setTeacherInfo(newInfo)
     setCookie('teacherInfo', JSON.stringify(newInfo))
   }

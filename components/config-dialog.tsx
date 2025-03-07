@@ -8,9 +8,10 @@ import { Input } from "./ui/input"
 import { useState, useEffect, useMemo } from "react"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "./ui/command"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
 import debounce from 'lodash/debounce'
+import config from '@/config.json'
 
 interface School {
   SCHUL_NM: string
@@ -35,7 +36,14 @@ interface ConfigDialogProps {
   onSave: (config: ClassConfig) => void
 }
 
-const API_URL = "https://school-api.ij5.dev"
+const API_URL = config.isDev ? config.development.apiUrl : config.production.apiUrl
+const DEBUG = config.isDev ? config.development.debug : config.production.debug
+
+const log = (...args: any[]) => {
+  if (DEBUG) {
+    console.log(...args)
+  }
+}
 
 export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, onSave }: ConfigDialogProps) {
   const [tempConfig, setTempConfig] = useState(classConfig)
@@ -47,11 +55,11 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
   const [isSearching, setIsSearching] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  // Add debug logs to track state changes
+  // Update debug logs to use the log function
   useEffect(() => {
-    console.log('Schools updated:', schools)
-    console.log('Open combobox:', openCombobox)
-    console.log('Search value:', searchValue)
+    log('Schools updated:', schools)
+    log('Open combobox:', openCombobox)
+    log('Search value:', searchValue)
   }, [schools, openCombobox, searchValue])
 
   // Reset form when dialog opens
@@ -77,7 +85,7 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      if (isSearching || !tempConfig.schoolCode) {  // Add check for valid school selection
+      if (isSearching || !tempConfig.schoolCode) {
         setTempConfig(prev => ({
           ...prev,
           school: '',
@@ -89,21 +97,24 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
       }
       setIsSearching(false)
     }
+    setOpenCombobox(open)
     onOpenChange(open)
   }
 
   const handleSearchValueChange = (value: string) => {
-    console.log('Search value changing to:', value)
+    log('Search value changing from:', searchValue, 'to:', value)
     setSearchValue(value)
     setIsSearching(true)
     setOpenCombobox(true)
     
-    if (value.length < 2) {  // Clear results immediately if input is too short
+    if (value.length < 2) {
+      log('Search value too short, clearing results')
       setSchools([])
       setError(null)
       return
     }
     
+    log('Initiating search for:', value)
     searchSchools(value)
   }
 
@@ -118,9 +129,9 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
       grade: '',
       class: ''
     }))
-    setOpenCombobox(true)
     setSearchValue(schoolName)
     setIsSearching(false)
+    setOpenCombobox(false)
   }
 
   const getAvailableGrades = (schoolName: string) => {
@@ -148,10 +159,10 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
     }
   }
 
-  // Update the searchSchools function
+  // Update searchSchools to use the log function
   const searchSchools = useMemo(() =>
     debounce(async (query: string) => {
-      console.log('Searching schools for:', query)
+      log('Debounced search executing for:', query)
       if (query.length < 2) {
         setSchools([])
         setError(null)
@@ -159,12 +170,15 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
         return
       }
       
-      setIsLoading(true) // Start loading
+      setIsLoading(true)
+      setOpenCombobox(true)
       try {
         setError(null)
+        log('Fetching schools for query:', query)
         const response = await fetch(`${API_URL}/school?schoolname=${encodeURIComponent(query)}`)
         if (!response.ok) throw new Error('학교 정보를 불러오지 못했습니다')
         const data = await response.json()
+        log('Search results received:', data)
         setSchools(Array.isArray(data) ? data : [])
         if (Array.isArray(data) && data.length === 0) {
           setError('검색 결과가 없습니다')
@@ -174,9 +188,9 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
         setSchools([])
         setError(error instanceof Error ? error.message : '학교 정보를 불러오는 중 오류가 발생했습니다')
       } finally {
-        setIsLoading(false) // End loading
-        setOpenCombobox(true)
+        setIsLoading(false)
         setIsSearching(false)
+        setOpenCombobox(true)
       }
     }, 500),
     []
@@ -207,9 +221,9 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
           <div className="flex flex-col gap-2">
             <Label className="dark:text-neutral-200">학교</Label>
             <Popover 
-              open={openCombobox} 
+              open={openCombobox}
               onOpenChange={(open) => {
-                console.log('Popover open changing to:', open)
+                log('Popover open changing to:', open)
                 setOpenCombobox(open)
               }}
             >
@@ -220,7 +234,7 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
                   aria-expanded={openCombobox}
                   className="justify-between w-full dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100"
                   onClick={() => {
-                    console.log('Trigger clicked, current open state:', openCombobox)
+                    log('Trigger clicked, current open state:', openCombobox)
                     setOpenCombobox(true)
                   }}
                 >
@@ -232,14 +246,19 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
                 className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-neutral-800 dark:border-neutral-700"
                 align="start"
               >
-                <Command className="dark:bg-neutral-800">
+                <Command 
+                  className="dark:bg-neutral-800"
+                  filter={() => 1}
+                  shouldFilter={false}
+                >
                   <CommandInput 
                     placeholder="학교 이름 검색..." 
                     value={searchValue}
                     onValueChange={handleSearchValueChange}
                     className="dark:bg-neutral-800 dark:text-neutral-100"
                   />
-                  <div className=" overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-400 dark:scrollbar-thumb-neutral-600">
+                  
+                  <CommandList>
                     {error ? (
                       <div className="py-6 text-center text-sm text-neutral-500 dark:text-neutral-400">
                         {error}
@@ -257,10 +276,8 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
                         검색 결과가 없습니다
                       </div>
                     ) : (
-                      <CommandGroup className="dark:bg-neutral-800" key={searchValue}>
-                        {schools.map((school) => {
-                          console.log('School:', school)
-                          return (
+                      <CommandGroup>
+                        {schools.map((school) => (
                             <CommandItem
                               key={`${school.SCHUL_NM}-${school.SD_SCHUL_CODE}`}
                               onSelect={() => handleSchoolSelect(school.SCHUL_NM)}
@@ -277,11 +294,10 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
                                 ({school.ATPT_OFCDC_SC_NM})
                               </span>
                             </CommandItem>
-                          )
-                        })}
+                        ))}
                       </CommandGroup>
                     )}
-                  </div>
+                  </CommandList>
                 </Command>
               </PopoverContent>
             </Popover>
