@@ -48,9 +48,9 @@ export function TeacherInfoPopup({ subject, onSave, initialInfo = "", children }
       >
         <div className="grid gap-4">
           <div className="space-y-2">
-            <h4 className="font-medium leading-none dark:text-neutral-100">{subject} 선생님 정보</h4>
+            <h4 className="font-medium leading-none dark:text-neutral-100">선생님 정보 수정</h4>
             <p className="text-sm text-muted-foreground dark:text-neutral-400">
-              {subject} 담당 선생님 정보를 입력하세요. 브라우저 쿠키에 정보가 저장됩니다.
+              {subject} 선생님의 정보를 입력하세요. 브라우저에 자동으로 저장됩니다.
             </p>
           </div>
           <div className="grid gap-2">

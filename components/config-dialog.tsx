@@ -269,7 +269,7 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
                       </CommandEmpty>
                     ) : isLoading ? (
                       <div className="py-6 text-center text-sm dark:text-neutral-400">
-                        검색중...
+                        검색 중...
                       </div>
                     ) : schools.length === 0 ? (
                       <div className="py-6 text-center text-sm dark:text-neutral-400">
