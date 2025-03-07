@@ -33,7 +33,7 @@ export function AboutHoverCard() {
         sideOffset={8}
       >
         <div className="space-y-4 animate-in fade-in-50 duration-200">
-          <h4 className="font-semibold dark:text-neutral-100">기타 사항</h4>
+          <h4 className="font-semibold dark:text-neutral-100">안내</h4>
           <div className="text-sm dark:text-neutral-400 space-y-2 break-all">
             <p>• 각 과목을 클릭하여 선생님을 입력할 수 있습니다.</p>
             <p>• 설정 버튼을 눌러 학교와 반을 변경할 수 있습니다.</p>

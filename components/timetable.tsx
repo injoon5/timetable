@@ -35,13 +35,15 @@ const DEFAULT_SCHOOL_CODE = "7081492"
 
 function getSubjectColor(subject: string) {
   // Generate a consistent index based on the subject name
-  let total = 0;
-  for (let i = 0; i < subject.length; i++) {
-    total += subject.charCodeAt(i);
-  }
-  
-  const colorIndex = total % (COLORS.length);
-  return COLORS[colorIndex];
+  // let total = 0;
+  // for (let i = 0; i < subject.length; i++) {
+  //   total += subject.charCodeAt(i);
+  // }
+
+  // why sum?
+  return COLORS[
+    subject.charCodeAt(0) % (COLORS.length) // previously colorIndex
+  ];
 }
 
 interface ClassConfig {
@@ -201,11 +203,21 @@ export default function Timetable() {
     )
   }
 
+  function getCurrentSchoolYear() {
+    // calculates school year. year-- if month is jan or feb
+    const today = new Date();
+    let schoolYear = today.getFullYear();
+    if (today.getMonth() < 2) {
+      schoolYear--;
+    }
+    return schoolYear;
+  }
+
   return (
     <div className="py-6 px-2 sm:px-6 max-w-4xl mx-auto print:max-w-none">
       <div className="mb-2 text-center print:mb-8">
         <p className="text-neutral-500 dark:text-neutral-400 print:text-lg text-xl font-semibold">
-          2025학년도 {classConfig.school}
+          {getCurrentSchoolYear()}학년도 {classConfig.school}
         </p>
         <h1 className="text-3xl font-bold text-neutral-800 dark:text-neutral-100 print:text-4xl mb-4">
           {classConfig.grade}학년 {classConfig.class}반 시간표
