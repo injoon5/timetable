@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, type KeyboardEvent } from "react"
+import { useState, useEffect, useRef, type KeyboardEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,10 +19,21 @@ interface TeacherInfoPopupProps {
 export function TeacherInfoPopup({ subject, onSave, initialInfo = "", children }: TeacherInfoPopupProps) {
   const [teacherInfo, setTeacherInfo] = useState(initialInfo)
   const [isOpen, setIsOpen] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setTeacherInfo(initialInfo)
   }, [initialInfo])
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      const input = inputRef.current
+      input.focus()
+      requestAnimationFrame(() => {
+        input.setSelectionRange(input.value.length, input.value.length)
+      })
+    }
+  }, [isOpen])
 
   const handleSave = () => {
     onSave(teacherInfo)
@@ -56,6 +67,7 @@ export function TeacherInfoPopup({ subject, onSave, initialInfo = "", children }
           <div className="grid gap-2">
             <Label htmlFor="teacher" className="dark:text-neutral-200">선생님 이름</Label>
             <Input
+              ref={inputRef}
               id="teacher"
               value={teacherInfo}
               onChange={(e) => setTeacherInfo(e.target.value)}

@@ -102,6 +102,7 @@ export default function Timetable() {
     log('Saving new config:', newConfig)
     setTempConfig(newConfig)
     saveConfig()
+    setShowConfig(false)
   }
 
   const handleTeacherInfoSave = (subject: string, info: string) => {

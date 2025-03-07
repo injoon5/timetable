@@ -178,6 +178,12 @@ export const useTimetableStore = create<TimetableState>()((set, get) => ({
     if (!tempConfig) return false
 
     try {
+      // Reset week state and enable loading
+      set({ 
+        isNextWeek: false,
+        isWeekChangeLoading: true
+      })
+
       // Try fetching with new config first
       await get().fetchTimetable(tempConfig)
       
@@ -186,14 +192,16 @@ export const useTimetableStore = create<TimetableState>()((set, get) => ({
       set({ 
         classConfig: tempConfig,
         tempConfig: null,
-        showConfig: false
+        showConfig: false,
+        isWeekChangeLoading: false // Reset loading state after success
       })
       return true
     } catch (err) {
       set({ 
         error: err instanceof Error 
           ? `설정을 저장하는 중 오류가 발생했습니다: ${err.message}`
-          : '설정을 저장하지 못했습니다. 학교 정보와 인터넷 연결을 확인해 주세요.'
+          : '설정을 저장하지 못했습니다. 학교 정보와 인터넷 연결을 확인해 주세요.',
+        isWeekChangeLoading: false // Reset loading state on error
       })
       return false
     }
