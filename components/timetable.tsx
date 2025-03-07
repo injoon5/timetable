@@ -10,6 +10,7 @@ import { Skeleton } from "./ui/skeleton"
 import { Button } from "./ui/button"
 import { cn } from "@/lib/utils"
 import config from '@/config.json'
+import { useTimetableStore } from "@/store/timetable"
 
 // Constants
 const DAYS = ["월", "화", "수", "목", "금"]
@@ -68,45 +69,26 @@ interface TimetableData {
 }
 
 export default function Timetable() {
-  const [teacherInfo, setTeacherInfo] = useState<Record<string, Record<string, string>>>({})
-  const [showConfig, setShowConfig] = useState(false)
-  const [classConfig, setClassConfig] = useState<ClassConfig | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [timetableData, setTimetableData] = useState<TimetableData | null>(null)
-  const [isNextWeek, setIsNextWeek] = useState(false)
+  const { 
+    isNextWeek, 
+    isWeekChangeLoading,
+    changeWeek,
+    teacherInfo,
+    showConfig,
+    setShowConfig,
+    classConfig,
+    isLoading,
+    error,
+    timetableData,
+    initializeStore,
+    setTempConfig,
+    saveConfig,
+    saveTeacherInfo
+  } = useTimetableStore()
 
   // Single effect for initial setup
   useEffect(() => {
-    const defaultConfig = {
-      school: "목운중학교",
-      schoolCode: DEFAULT_SCHOOL_CODE,
-      grade: "3",
-      class: "4",
-      lunchAfter: 4
-    }
-
-    // Get or set cookie and fetch data
-    const savedConfig = getCookie('classConfig')
-    const config = savedConfig ? JSON.parse(savedConfig as string) : defaultConfig
-    
-    if (!savedConfig) {
-      setCookie('classConfig', JSON.stringify(defaultConfig))
-    }
-
-    // Load teacher info if exists
-    const storedInfo = getCookie('teacherInfo')
-    if (storedInfo) {
-      try {
-        setTeacherInfo(JSON.parse(storedInfo as string))
-      } catch (e) {
-        log('Error parsing teacher info:', e)
-      }
-    }
-
-    // Set config and fetch
-    setClassConfig(config)
-    fetchTimetable(config)
+    initializeStore()
   }, [])
 
   // Update title when config changes
@@ -116,82 +98,22 @@ export default function Timetable() {
     }
   }, [classConfig])
 
-  // Only fetch on week change if we have a config
-  useEffect(() => {
-    if (classConfig && !isLoading) {
-      fetchTimetable(classConfig)
-    }
-  }, [isNextWeek])
-
-  // Update fetchTimetable to use API_URL and logging
-  const fetchTimetable = async (config: ClassConfig) => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const params = new URLSearchParams({
-        grade: config.grade,
-        classno: config.class,
-        week: isNextWeek ? "1" : "0", 
-        schoolcode: config.schoolCode
-      })
-      
-      log('Fetching timetable with params:', Object.fromEntries(params))
-      const response = await fetch(`${API_URL}/timetable?${params}`)
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status}`)
-      }
-      
-      const data = await response.json()
-      log('Timetable data received:', data)
-      setTimetableData(data)
-      
-      // Only save to cookies on success
-      setCookie('classConfig', JSON.stringify(config))
-    } catch (err) {
-      // On error, revert the config
-      setClassConfig(classConfig)
-      log('Fetch error:', err)
-      setError(
-        err instanceof Error 
-          ? `시간표를 불러오는 중 오류가 발생했습니다: ${err.message}` 
-          : '시간표를 불러오지 못했습니다. 학교 정보와 인터넷 연결을 확인해 주세요.'
-      )
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Simplify handleConfigSave with logging
   const handleConfigSave = (newConfig: ClassConfig) => {
     log('Saving new config:', newConfig)
-    // Update state immediately for UI
-    setClassConfig(newConfig)
-    setShowConfig(false)
-    
-    // Then try to fetch
-    fetchTimetable(newConfig)
+    setTempConfig(newConfig)
+    saveConfig()
   }
 
-  const saveTeacherInfo = (subject: string, info: string) => {
-    const configKey = `${classConfig?.schoolCode}-${classConfig?.grade}-${classConfig?.class}`
-    const newInfo = {
-      ...teacherInfo,
-      [configKey]: {
-        ...(teacherInfo[configKey] || {}),
-        [subject]: info
-      }
-    }
-    log('Saving teacher info:', { subject, info, configKey })
-    setTeacherInfo(newInfo)
-    setCookie('teacherInfo', JSON.stringify(newInfo))
+  const handleTeacherInfoSave = (subject: string, info: string) => {
+    log('Saving teacher info:', { subject, info })
+    saveTeacherInfo(subject, info)
   }
 
   const generatePeriods = () => {
     if (!timetableData?.day_time?.length || !timetableData?.timetable?.length) return []
     
     // First, create all regular periods
-    const periods = timetableData.day_time.map((timeStr, idx) => {
+    const periods = timetableData.day_time.map((timeStr: string, idx: number) => {
       const period = timeStr.split('(')[0]
       const time = timeStr.split('(')[1]?.replace(')', '')
       
@@ -208,7 +130,7 @@ export default function Timetable() {
     // Then insert lunch at the correct position
     const lunchPeriod = {
       id: "점심",
-      time: "12:20~13:20", // You might want to make this configurable
+      time: "12:20~13:20",
       subjects: Array(DAYS.length).fill("점심")
     }
 
@@ -238,7 +160,7 @@ export default function Timetable() {
     return (
       <TeacherInfoPopup
         subject={subject}
-        onSave={(info) => saveTeacherInfo(subject, info)}
+        onSave={(info) => handleTeacherInfoSave(subject, info)}
         initialInfo={info}
       >
         <div className="w-full h-14 xs:h-18 sm:h-23 flex flex-col items-center justify-center overflow-hidden">
@@ -291,8 +213,8 @@ export default function Timetable() {
         <div className="flex justify-end gap-2 print:hidden">
           <Button
             variant="outline"
-            onClick={() => setIsNextWeek(false)}
-            disabled={!isNextWeek}
+            onClick={() => changeWeek(false)}
+            disabled={!isNextWeek || isWeekChangeLoading}
             className={cn(
               "border-neutral-200 dark:border-neutral-700 rounded-xl bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-800 dark:hover:bg-neutral-900",
               "px-3"
@@ -302,8 +224,8 @@ export default function Timetable() {
           </Button>
           <Button
             variant="outline" 
-            onClick={() => setIsNextWeek(true)}
-            disabled={isNextWeek}
+            onClick={() => changeWeek(true)}
+            disabled={isNextWeek || isWeekChangeLoading}
             className={cn(
               "border-neutral-200 dark:border-neutral-700 rounded-xl bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-800 dark:hover:bg-neutral-900",
               "px-3"
@@ -320,7 +242,7 @@ export default function Timetable() {
             {error}
           </pre>
         </div>
-      ) : isLoading ? (
+      ) : (isLoading || isWeekChangeLoading) ? (
         <div className="overflow-x-auto shadow-lg rounded-xl border border-neutral-200 dark:border-neutral-800">
           <div className="min-w-full bg-white dark:bg-neutral-900">
             <Skeleton className="h-[600px]" />
@@ -410,7 +332,7 @@ export default function Timetable() {
         open={showConfig}
         onOpenChange={setShowConfig}
         classConfig={classConfig}
-        onConfigChange={setClassConfig}
+        onConfigChange={setTempConfig}
         onSave={handleConfigSave}
       />
     </div>
