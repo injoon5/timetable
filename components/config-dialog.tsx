@@ -376,7 +376,7 @@ export function ConfigDialog({ open, onOpenChange, classConfig, onConfigChange, 
   if (isSmallScreen) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="h-[40%]">
+        <DrawerContent className="h-[85%]">
           <DrawerHeader>
             <DrawerTitle>설정</DrawerTitle>
             <DrawerDescription>
