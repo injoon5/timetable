@@ -6,7 +6,7 @@ import { Nav } from '@/components/nav'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: '학교 정보',
+  // title: '학교 정보',
   description: '학교 정보를 확인하세요',
   generator: 'Next.js',
   openGraph: {
