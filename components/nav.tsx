@@ -5,10 +5,11 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Menu, Calendar, Utensils, Clock, Settings } from "lucide-react"
 import { Button } from "./ui/button"
-import { Drawer, DrawerContent, DrawerTrigger } from "./ui/drawer"
+import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle } from "./ui/drawer"
 import { cn } from "@/lib/utils"
 import { ConfigDialog } from "./config-dialog"
 import { useTimetableStore } from "@/store/timetable"
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
 const links = [
   { href: "/", label: "시간표", icon: Clock },
@@ -38,6 +39,11 @@ export function Nav() {
               </Button>
             </DrawerTrigger>
             <DrawerContent className="h-[50%]">
+              <VisuallyHidden asChild>
+                <DrawerHeader>
+                  <DrawerTitle>메뉴</DrawerTitle>
+                </DrawerHeader>
+              </VisuallyHidden>
               <div className="px-4 py-6">
                 <nav className="flex flex-col gap-4">
                   {links.map((link) => {
