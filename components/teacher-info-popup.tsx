@@ -19,6 +19,7 @@ interface TeacherInfoPopupProps {
 export function TeacherInfoPopup({ subject, onSave, initialInfo = "", children }: TeacherInfoPopupProps) {
   const [teacherInfo, setTeacherInfo] = useState(initialInfo)
   const [isOpen, setIsOpen] = useState(false)
+  const [error, setError] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -36,13 +37,28 @@ export function TeacherInfoPopup({ subject, onSave, initialInfo = "", children }
   }, [isOpen])
 
   const handleSave = () => {
+    if (teacherInfo.length > 4) {
+      setError("선생님 이름은 4자를 초과할 수 없습니다")
+      return
+    }
     onSave(teacherInfo)
     setIsOpen(false)
+    setError("")
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleSave()
+    }
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setTeacherInfo(value)
+    if (value.length > 4) {
+      setError("선생님 이름은 4자를 초과할 수 없습니다")
+    } else {
+      setError("")
     }
   }
 
@@ -70,12 +86,19 @@ export function TeacherInfoPopup({ subject, onSave, initialInfo = "", children }
               ref={inputRef}
               id="teacher"
               value={teacherInfo}
-              onChange={(e) => setTeacherInfo(e.target.value)}
+              onChange={handleChange}
               onKeyDown={handleKeyDown}
-              className="h-8 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 dark:placeholder-neutral-400"
+              maxLength={10}
+              className={cn(
+                "h-8 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 dark:placeholder-neutral-400",
+                error && "border-red-500 dark:border-red-500"
+              )}
             />
+            {error && (
+              <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+            )}
           </div>
-          <Button onClick={handleSave}>저장</Button>
+          <Button onClick={handleSave} disabled={teacherInfo.length > 4}>저장</Button>
         </div>
       </PopoverContent>
     </Popover>

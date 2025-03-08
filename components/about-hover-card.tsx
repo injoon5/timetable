@@ -39,7 +39,7 @@ export function AboutHoverCard() {
             <p>• 설정 버튼을 눌러 학교와 반을 변경할 수 있습니다.</p>
             <p>• 정보는 NEIS API에서 불러오고 있습니다. </p>
             <p>• 선생님 성함 끝자가 빠져서 정보가 제공되므로 직접 수정해 주세요. </p>
-            <p>• <kbd>Ctrl/Cmd + P</kbd>를 눌러 인쇄하면 적절한 디자인으로 출력할 수 있습니다. </p>
+            <p>• <kbd>Ctrl/Cmd + P</kbd>를 눌러 인쇄하면 적절한 디자인으로 출력할 수 있습니다. (크기 조절 필요)</p>
             <p>• 입력한 정보는 브라우저에 자동으로 저장됩니다.</p>
           </div>
           <div className="pt-2 border-t dark:border-neutral-800">

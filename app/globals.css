@@ -42,53 +42,51 @@
   --animate-fade-out: fadeOut 0.2s ease-out;
 
   @keyframes slideUpAndFade {
-    0% {
+    from {
       opacity: 0;
-      transform: translateY(4px);
+      transform: translateY(2px);
     }
-    100% {
+    to {
       opacity: 1;
       transform: translateY(0);
     }
   }
   @keyframes slideDownAndFade {
-    0% {
+    from {
       opacity: 0;
-      transform: translateY(-4px);
+      transform: translateY(-2px);
     }
-    100% {
+    to {
       opacity: 1;
       transform: translateY(0);
     }
   }
   @keyframes slideRightAndFade {
-    0% {
+    from {
       opacity: 0;
-      transform: translateX(-4px);
+      transform: translateX(-2px);
     }
-    100% {
+    to {
       opacity: 1;
       transform: translateX(0);
     }
   }
   @keyframes slideLeftAndFade {
-    0% {
+    from {
       opacity: 0;
-      transform: translateX(4px);
+      transform: translateX(2px);
     }
-    100% {
+    to {
       opacity: 1;
       transform: translateX(0);
     }
   }
   @keyframes fadeOut {
-    0% {
+    from {
       opacity: 1;
-      transform: translateY(0);
     }
-    100% {
+    to {
       opacity: 0;
-      transform: translateY(4px);
     }
   }
 }
@@ -154,7 +152,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.5% 48%;
+    --ring: 224.3 76.3% 48%;
   }
 
   html {

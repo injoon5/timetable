@@ -157,12 +157,12 @@ const CommandGroup = React.forwardRef<
     <div className="relative">
       {showUpButton && <CommandScrollUpButton 
         onClick={() => {
-          groupRef.current?.scrollBy(0, -50)
+          groupRef.current?.scrollBy({ top: -50, behavior: 'smooth' })
         }}
       />}
       <div
         ref={groupRef}
-        className="max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-400 dark:scrollbar-thumb-neutral-600"
+        className="max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-400 dark:scrollbar-thumb-neutral-600 touch-pan-y"
       >
         <CommandPrimitive.Group
           ref={ref}
@@ -175,7 +175,7 @@ const CommandGroup = React.forwardRef<
       </div>
       {showDownButton && <CommandScrollDownButton 
         onClick={() => {
-          groupRef.current?.scrollBy(0, 50)
+          groupRef.current?.scrollBy({ top: 50, behavior: 'smooth' })
         }}
       />}
     </div>

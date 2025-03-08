@@ -90,9 +90,9 @@ export function Nav() {
           <button
             onClick={() => setShowConfig(true)}
             className={cn(
-              "flex items-center gap-2 text-base font-medium",
+              "flex items-center gap-2 text-base font-medium p-2 rounded-lg",
               "text-neutral-500 dark:text-neutral-400",
-              "hover:text-neutral-900 dark:hover:text-neutral-50"
+              "hover:bg-neutral-100 dark:hover:bg-neutral-900"
             )}
           >
             <Settings className="h-5 w-5" />

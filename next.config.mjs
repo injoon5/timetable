@@ -15,12 +15,22 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
   experimental: {
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
+    serverActions: {
+      allowedOrigins: ['localhost:3000', 'localhost:5000'],
+    },
   },
+  reactStrictMode: true,
 }
 
 mergeConfig(nextConfig, userConfig)
