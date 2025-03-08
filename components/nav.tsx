@@ -32,7 +32,7 @@ export function Nav() {
         <div className="sm:hidden">
           <Drawer open={open} onOpenChange={setOpen}>
             <DrawerTrigger asChild>
-              <Button variant="ghost" size="icon" className="sm:hidden hover:bg-neutral-100 hover:dark:bg-neutral-900">
+              <Button variant="ghost" size="icon" className="sm:hidden hover:bg-neutral-100 dark:hover:bg-neutral-900">
                 <Menu className="h-6 w-6" />
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
