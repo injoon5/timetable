@@ -50,7 +50,7 @@ export function AboutHoverCard() {
       <Drawer open={isOpen} onOpenChange={setIsOpen}>
         <DrawerTrigger asChild>
           <button 
-            className="p-2 rounded-full border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            className="p-2 rounded-full text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors"
           >
             <Info className="w-5 h-5" />
           </button>
@@ -76,10 +76,10 @@ export function AboutHoverCard() {
     >
       <HoverCardTrigger asChild>
         <button 
-          className="p-2 rounded-full border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+          className="p-2 rounded-lg flex flex-row items-center gap-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors"
           onClick={() => setIsOpen(!isOpen)}
         >
-          <Info className="w-5 h-5" />
+          <Info className="w-5 h-5" /> 안내
         </button>
       </HoverCardTrigger>
       <HoverCardContent 

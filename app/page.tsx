@@ -143,9 +143,6 @@ export default function Home() {
                 </p>
               )}
             </div>
-            <div className="flex justify-center gap-2">
-              <AboutHoverCard />
-            </div>
           </div>
 
           <ConfigDialog
