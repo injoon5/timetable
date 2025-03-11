@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card"
 import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle } from "./ui/drawer"
 import { Info } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { useMediaQuery } from "react-responsive"
+import {Dialog, DialogContent, DialogTitle, DialogTrigger, DialogHeader} from "@/components/ui/dialog";
 
 export function AboutHoverCard() {
   const [isOpen, setIsOpen] = useState(false)
@@ -55,7 +55,7 @@ export function AboutHoverCard() {
             <Info className="w-5 h-5" />
           </button>
         </DrawerTrigger>
-        <DrawerContent className="h-[40%]">
+        <DrawerContent className="h-[50%]">
           <DrawerHeader>
             <DrawerTitle>안내</DrawerTitle>
           </DrawerHeader>
@@ -68,34 +68,59 @@ export function AboutHoverCard() {
   }
 
   return (
-    <HoverCard 
-      openDelay={100} 
-      closeDelay={200}
-      open={isOpen}
-      onOpenChange={setIsOpen}
-    >
-      <HoverCardTrigger asChild>
-        <button 
-          className="p-2 rounded-lg flex flex-row items-center gap-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <Info className="w-5 h-5" /> 안내
-        </button>
-      </HoverCardTrigger>
-      <HoverCardContent 
-        className={cn(
-          "w-80 dark:bg-neutral-900 dark:border-neutral-800",
-          "data-[state=open]:animate-slideUpAndFade data-[state=open]:duration-300",
-          "data-[state=closed]:animate-fadeOut data-[state=closed]:duration-200"
-        )}
-        sideOffset={8}
+      <Dialog
+        open={isOpen}
+        onOpenChange={setIsOpen}
       >
-        <div className="space-y-4 animate-in fade-in-50 duration-200">
-          <h4 className="font-semibold dark:text-neutral-100">안내</h4>
+        <DialogTrigger asChild>
+          <button
+                className="p-2 rounded-lg flex flex-row items-center gap-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors"
+                onClick={() => setIsOpen(!isOpen)}
+          >
+            <Info className="w-5 h-5" /> 안내
+          </button>
+        </DialogTrigger>
+        <DialogContent
+          className={cn(
+          "w-96 dark:bg-neutral-900/90 dark:border-neutral-800",
+              "rounded-lg max-w-lg p-6 backdrop-blur-sm"
+          )}
+        >
+          <DialogHeader>
+            <DialogTitle className="dark:text-neutral-100">안내</DialogTitle>
+          </DialogHeader>
           <AboutContent />
-        </div>
-        
-      </HoverCardContent>
-    </HoverCard>
+        </DialogContent>
+      </Dialog>
+
+      // <HoverCard
+      //   openDelay={100}
+      //   closeDelay={200}
+      //   open={isOpen}
+      //   onOpenChange={setIsOpen}
+      // >
+      //   <HoverCardTrigger asChild>
+      //     <button
+      //       className="p-2 rounded-lg flex flex-row items-center gap-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors"
+    //       onClick={() => setIsOpen(!isOpen)}
+    //     >
+    //       <Info className="w-5 h-5" /> 안내
+    //     </button>
+    //   </HoverCardTrigger>
+    //   <HoverCardContent
+    //     className={cn(
+    //       "w-80 dark:bg-neutral-900 dark:border-neutral-800",
+    //       "data-[state=open]:animate-slideUpAndFade data-[state=open]:duration-300",
+    //       "data-[state=closed]:animate-fadeOut data-[state=closed]:duration-200"
+    //     )}
+    //     sideOffset={8}
+    //   >
+    //     <div className="space-y-4 animate-in fade-in-50 duration-200">
+    //       <h4 className="font-semibold dark:text-neutral-100">안내</h4>
+    //       <AboutContent />
+    //     </div>
+    //
+    //   </HoverCardContent>
+    // </HoverCard>
   )
 }
