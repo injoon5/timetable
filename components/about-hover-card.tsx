@@ -92,35 +92,5 @@ export function AboutHoverCard() {
           <AboutContent />
         </DialogContent>
       </Dialog>
-
-      // <HoverCard
-      //   openDelay={100}
-      //   closeDelay={200}
-      //   open={isOpen}
-      //   onOpenChange={setIsOpen}
-      // >
-      //   <HoverCardTrigger asChild>
-      //     <button
-      //       className="p-2 rounded-lg flex flex-row items-center gap-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors"
-    //       onClick={() => setIsOpen(!isOpen)}
-    //     >
-    //       <Info className="w-5 h-5" /> 안내
-    //     </button>
-    //   </HoverCardTrigger>
-    //   <HoverCardContent
-    //     className={cn(
-    //       "w-80 dark:bg-neutral-900 dark:border-neutral-800",
-    //       "data-[state=open]:animate-slideUpAndFade data-[state=open]:duration-300",
-    //       "data-[state=closed]:animate-fadeOut data-[state=closed]:duration-200"
-    //     )}
-    //     sideOffset={8}
-    //   >
-    //     <div className="space-y-4 animate-in fade-in-50 duration-200">
-    //       <h4 className="font-semibold dark:text-neutral-100">안내</h4>
-    //       <AboutContent />
-    //     </div>
-    //
-    //   </HoverCardContent>
-    // </HoverCard>
   )
 }
