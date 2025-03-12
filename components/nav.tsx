@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { ConfigDialog } from "./config-dialog"
 import { useTimetableStore } from "@/store/timetable"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
+import {AboutHoverCard} from "@/components/about-hover-card";
 
 const links = [
   { href: "/", label: "시간표", icon: Clock },
@@ -92,7 +93,8 @@ export function Nav() {
           })}
         </div>
 
-        <div className="ml-auto">
+        <div className="ml-auto flex flex-row gap-2 sm:gap-4">
+          <AboutHoverCard />
           <button
             onClick={() => setShowConfig(true)}
             className={cn(
