@@ -1,6 +1,6 @@
 {
   "production": {
-    "apiUrl": "https://school-api.ij5.dev",
+    "apiUrl": "https://api.timefor.school",
     "debug": false
   },
   "development": {
